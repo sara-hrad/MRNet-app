@@ -3,6 +3,13 @@ import torch.nn as nn
 import torchvision
 import torch.nn.functional as F
 from  sklearn import metrics
+from torch.utils.tensorboard import SummaryWriter
+import numpy as np
+import torch.optim as optim
+
+
+# Create a SummaryWriter instance
+writer = SummaryWriter(log_dir="logs")
 
 
 class MRNet(nn.Module):
@@ -59,7 +66,6 @@ def train_model(model, train_loader, epoch, num_epochs, optimizer, log_every=100
 
         loss_value = loss.item()
         losses.append(loss_value)
-
         writer.add_scalar('Train/Loss', loss_value,
                         epoch * len(train_loader) + i)
         writer.add_scalar('Train/AUC', auc, epoch * len(train_loader) + i)
@@ -82,7 +88,7 @@ def train_model(model, train_loader, epoch, num_epochs, optimizer, log_every=100
     return train_loss_epoch, train_auc_epoch
 
 
-def evaluate_model(model, validation_loader, epoch, num_epochs, log_every=100):
+def evaluate_model(model, validation_loader, epoch, num_epochs, optimizer, log_every=100):
     _ = model.eval()    
     if torch.cuda.is_available():
         model.cuda()
@@ -116,9 +122,9 @@ def evaluate_model(model, validation_loader, epoch, num_epochs, log_every=100):
         loss_value = loss.item()
         losses.append(loss_value)
 
-        writer.add_scalar('Train/Loss', loss_value,
-                        epoch * len(train_loader) + i)
-        writer.add_scalar('Train/AUC', auc, epoch * len(train_loader) + i)
+        writer.add_scalar('Valid/Loss', loss_value,
+                        epoch * len(validation_loader) + i)
+        writer.add_scalar('Valid/AUC', auc, epoch * len(validation_loader) + i)
 
         if (i % log_every == 0) & (i > 0):
             print('''[Epoch: {0} / {1} |Single batch number : {2} / {3} ]\
@@ -127,7 +133,7 @@ def evaluate_model(model, validation_loader, epoch, num_epochs, log_every=100):
                     epoch + 1,
                     num_epochs,
                     i,
-                    len(train_loader),
+                    len(validation_loader),
                     np.round(np.mean(losses), 4),
                     np.round(auc, 4)
                 )

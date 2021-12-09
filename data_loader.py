@@ -6,13 +6,15 @@ import datetime
 import os
 import numpy as np
 import pandas as pd
+from torch.utils.data import Dataset
 import matplotlib.pyplot as plt
 from ipywidgets import interact, Dropdown, IntSlider
 from tqdm import tqdm_notebook
 from torchvision import transforms as t
 import sklearn.linear_model as sk
 
-class MRDataset(torch.utils.data.Dataset):
+
+class MRDataset(Dataset):
     def __init__(self, root_dir, task, plane, train=True, transform=None, weights=None):
         super().__init__()
         self.task = task
@@ -66,3 +68,7 @@ class MRDataset(torch.utils.data.Dataset):
 
         return array, label, weight
 
+#
+# if __name__ = "__main__":
+#     sample_dataset = MRDataset(train_img_dir, train_mask_dir)
+#

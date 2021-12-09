@@ -3,22 +3,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from ipywidgets import interact, Dropdown, IntSlider
 from tqdm import tqdm_notebook
+from data_loader import MRDataset
+from torch.utils.data import DataLoader
 import os
 import torch
-import torch.nn as nn
-import torchvision
-import argparse
-import datetime
 import streamlit as st
 
-train_path = 'D:/data/MRNet-v1.0/train/'
+train_path = './data/MRNet-v1.0/train/'
 
-@st.cache(ttl=3600, max_entries=10)  
+@st.cache_data(ttl=3600, max_entries=10)
 def load_one_stack(case, data_path=train_path, plane='coronal'):
     fpath = '{}/{}/{}.npy'.format(data_path, plane, case)
     return np.load(fpath)
 
-@st.cache(ttl=3600, max_entries=10)  
+@st.cache_data(ttl=3600, max_entries=10)
 def load_stacks(case, data_path=train_path):
     x = {}
     planes = ['coronal', 'sagittal', 'axial']
@@ -26,14 +24,14 @@ def load_stacks(case, data_path=train_path):
         x[plane] = load_one_stack(case, plane=plane)
     return x
 
-@st.cache(ttl=3600, max_entries=10)  
+@st.cache_data(ttl=3600, max_entries=10)
 def load_cases(train=True, n=None):
     assert (type(n) == int) and (n < 1250)
     if train:
-        case_list = pd.read_csv('D:/data/MRNet-v1.0/train-acl.csv', names=['case', 'label'], header=None,
+        case_list = pd.read_csv('./data/MRNet-v1.0/train-acl.csv', names=['case', 'label'], header=None,
                                dtype={'case': str, 'label': np.int64})['case'].tolist()        
     else:
-        case_list = pd.read_csv('D:/data/MRNet-v1.0/valid-acl.csv', names=['case', 'label'], header=None,
+        case_list = pd.read_csv('./data/MRNet-v1.0/valid-acl.csv', names=['case', 'label'], header=None,
                                dtype={'case': str, 'label': np.int64})['case'].tolist()        
     cases = {}
     
@@ -79,31 +77,23 @@ class KneePlot():
     
     def draw(self):
         case_widget = Dropdown(options=list(self.cases.keys()),
-                               description='Case'
-                              
-                              )
+                               description='Case')
         case_init = list(self.cases.keys())[0]
-
-
         slice_init_coronal = self.slice_nums[case_init]['coronal'] - 1        
         slices_widget_coronal = IntSlider(min=0, 
                                           max=slice_init_coronal, 
                                           value=slice_init_coronal // 2, 
                                           description='Coronal')
-        
         slice_init_sagittal = self.slice_nums[case_init]['sagittal'] - 1        
         slices_widget_sagittal = IntSlider(min=0,
                                            max=slice_init_sagittal,
                                            value=slice_init_sagittal // 2,
-                                           description='Sagittal'
-                                          )
-        
+                                           description='Sagittal')
         slice_init_axial = self.slice_nums[case_init]['axial'] - 1        
         slices_widget_axial = IntSlider(min=0,
                                         max=slice_init_axial,
                                         value=slice_init_axial // 2,
-                                        description='Axial'
-                                       )
+                                        description='Axial')
         
         def update_slices_widget(*args):
             slices_widget_coronal.max = self.slice_nums[case_widget.value]['coronal'] - 1
@@ -114,15 +104,13 @@ class KneePlot():
             
             slices_widget_axial.max = self.slice_nums[case_widget.value]['axial'] - 1
             slices_widget_axial.value = slices_widget_axial.max // 2
-    
-        
+
         case_widget.observe(update_slices_widget, 'value')
         interact(self._plot_slices,
                  case=case_widget, 
                  im_slice_coronal=slices_widget_coronal, 
                  im_slice_sagittal=slices_widget_sagittal, 
-                 im_slice_axial=slices_widget_axial
-                )
+                 im_slice_axial=slices_widget_axial)
     
     def resize(self, figsize): 
         self.figsize = figsize
@@ -150,7 +138,7 @@ def extract_predictions(task, plane, train=True):
                               transform=None, 
                               train=train)
     
-    train_loader = torch.utils.data.DataLoader(train_dataset, 
+    train_loader = DataLoader(train_dataset,
                                                batch_size=1, 
                                                shuffle=False, 
                                                num_workers=10, 

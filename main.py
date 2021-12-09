@@ -4,6 +4,8 @@ import torchvision
 import argparse
 import datetime 
 import os
+import shutil
+from torch.utils.data import DataLoader
 from torchvision import transforms as t
 from torch.utils.tensorboard import SummaryWriter
 import sklearn.linear_model as sk
@@ -11,6 +13,7 @@ import sklearn.linear_model as sk
 from model import *
 from data_loader import *
 from util import *
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -33,7 +36,7 @@ def parse_arguments():
 
   
 def run(args):
-    log_root_folder = "/content/drive/MyDrive/MRNet-v1.0/logs/{0}/{1}/".format(args.task, args.plane)
+    log_root_folder = "./data/MRNet-v1.0/logs/{0}/{1}/".format(args.task, args.plane)
     if args.flush_history == 1:
         objects = os.listdir(log_root_folder)
         for f in objects:
@@ -64,8 +67,8 @@ def train():
     train_dataset = MRDataset('./data/MRNet-v1.0/', args.task, args.plane, transform=augmentor, train=True)
     validation_dataset = MRDataset('./data/MRNet-v1.0/', args.task, args.plane, train=False)
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=11, drop_last=False)
-    validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=1, shuffle=-True, num_workers=11, drop_last=False)
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, num_workers=11, drop_last=False)
+    validation_loader = DataLoader(validation_dataset, batch_size=1, shuffle=-True, num_workers=11, drop_last=False)
 
     mrnet = MRNet()
     # mrnet = mrnet.cuda()
@@ -82,7 +85,7 @@ def train():
 
     for epoch in range(num_epochs):
         train_loss, train_auc = train_model(mrnet, train_loader, epoch, num_epochs, optimizer)
-        val_loss, val_auc = evaluate_model(mrnet, validation_loader, epoch, num_epochs)
+        val_loss, val_auc = evaluate_model(mrnet, validation_loader, epoch, num_epochs, optimizer)
 
         print("train loss : {0} | train auc {1} | val loss {2} | val auc {3}".format(
             train_loss, train_auc, val_loss, val_auc))

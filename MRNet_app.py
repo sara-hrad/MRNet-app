@@ -1,8 +1,3 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from ipywidgets import interact, Dropdown, IntSlider
-from tqdm import tqdm_notebook
 from util import *
 import streamlit as st
 import cv2
@@ -13,14 +8,11 @@ from PIL import Image
 ##############################################################################
 apptitle = 'SpinsightMRI'
 st.set_page_config(
-    page_title=apptitle, 
-    page_icon = Image.open('./data/spinsight.jpg'),
-    layout = "centered",
+    page_title=apptitle,
+    page_icon=Image.open('./data/nobackicon.png'),
+    layout="centered",
     initial_sidebar_state = "auto")
 
-# original_title = '<p style="font-family:Courier; color:Blue; font-size: 20px;">Adding Insight to Injury</p>'
-# original_title = '<*font-color: red >Adding Insight to Injury</*font>'
-# st.title(original_title)
 st.title('Spinsight - Adding Insight to Injury')
 
 st.sidebar.image('./data/nobackicon.png', caption="Spinsight")
@@ -29,7 +21,7 @@ st.sidebar.markdown("## Select Patient Information")
 ##############################################################################
 ###################           Loading Data              ######################
 ##############################################################################
-train_acl = pd.read_csv('D:/data/MRNet-v1.0/train-acl.csv', header=None,
+train_acl = pd.read_csv('./data/MRNet-v1.0/train-acl.csv', header=None,
                        names=['Case', 'Abnormal'], 
                        dtype={'Case': str, 'Abnormal': np.int64})
 
@@ -37,29 +29,6 @@ train_acl.head()
 print(train_acl.shape)
 train_acl.Abnormal.value_counts(normalize=True)
 
-##############################################################################
-###################       One instance visualization    ######################
-##############################################################################
-case = '0000'
-
-# mri_coronal = np.load('D:/data/MRNet-v1.0/train/coronal/0000.npy')
-# mri_axial = np.load('D:/data/MRNet-v1.0/train/axial/0000.npy')
-# mri_sagittal = np.load('D:/data/MRNet-v1.0/train/sagittal/0000.npy')
-
-# print(f'MRI scan on coronal plane: {mri_coronal.shape}')
-# print(f'MRI scan on axial plane: {mri_axial.shape}')
-# print(f'MRI scan on sagittal plane: {mri_sagittal.shape}')
-
-# fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
-
-# ax1.imshow(mri_coronal[0, :, :], 'gray');
-# ax1.set_title('Case 0 | Slice 1 | Sagittal');
-
-# ax2.imshow(mri_axial[0, :, :], 'gray');
-# ax2.set_title('Case 0 | Slice 1 | Axial');
-
-# ax3.imshow(mri_sagittal[0, :, :], 'gray');
-# ax3.set_title('Case 0 | Slice 1 | Coronal');
 
 ##############################################################################
 ####################     One stack/case visualization   ######################
@@ -76,7 +45,7 @@ p_plane = np.load('./data/results/predictionperplane.npy')
 p_patient = np.load('./data/results/predperpatiant.npy')
 
 P_ID = st.sidebar.selectbox('Specify the patient number:', list(cases.keys()))
-task = st.sidebar.selectbox('Task:', ['Overall Insight', 'Data Visualization', 'ACL Tear', 'Cardio Vascular', 'Radiologist Report', 'Meniscus', 'Recovery Estimation'])
+task = st.sidebar.selectbox('Task:', ['Overall Insight', 'Data Visualization', 'ACL Tear', 'Cardio Vascular', 'Radiologist Report'])
 
 if task == 'ACL Tear':
     plane = st.sidebar.multiselect('MRI Plane:', ['sagittal', 'coronal', 'axial'])
@@ -127,7 +96,7 @@ if task == 'ACL Tear':
     if dataset:
         st.subheader('MRNet dataset')
         st.info("""
-        MRNet is the knee MRI dataset provided by Stanford. It's splitted in:
+        MRNet is the knee MRI dataset provided by Stanford. It's splitted into:
 
         - **training set :** 1130 cases
         - **validation set :** 120 cases
@@ -136,20 +105,20 @@ if task == 'ACL Tear':
         **Note :** We don't have access to the test set.
 
         Each case has maximum of three MRI plane; axial, coronal, and sagital. There are .csv files to indicate the ground truth/labels for three different tasks; ACL tear, meniscus and abnormality.\n
-        The dataset page and competition results are availabel 
+        The dataset page and competition results are available 
         [here](https://stanfordmlgroup.github.io/competitions/mrnet/).
         """)
     ##############################################################################
     ####################     model information              ######################
     ##############################################################################
     show_model = st.sidebar.checkbox('Show model used for training')
-    image = cv2.imread('C:/Users/Golara/Pictures/techE/MRNet/data/overview.png')
+    image = cv2.imread('./data/overview.png')
 
     if show_model:
         st.subheader('Model Structure')
         st.image(image, caption ='Model overview.', channels='BGR')
         st.info("""
-        We trained three independent CNN models on data from each plane. Each of thease models are now specialize in detecting ACL tear from a given plane.
+        We trained three independent CNN models on data from each plane. Each of these models are now specialize in detecting ACL tear from a given plane.
         
         We integrated all these models by training a logistic regression on the outputs of independent ACL tear clasifiers.
         
@@ -161,9 +130,7 @@ if task == 'Cardio Vascular':
     st.subheader('Cardiovascular Risk Assessment')
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
-    #  st.subheader("Original Image")
         st.markdown("<h1 style='text-align: center;font-size: 20px;'>Original Image</h1>", unsafe_allow_html=True)
-    # st.markdown("<h1 style='text-align: center;font-size: 20px;'>Slice 12</h1>", unsafe_allow_html=True)
         image_1 = Image.open('./data/original_scan_how_it_work.PNG')
         st.image(image_1, caption='Axial PD')
     with col2:
@@ -195,14 +162,14 @@ if task == 'Cardio Vascular':
         with st.container():
             st.markdown("<h1 style='text-align: left;font-size: 20px;'>Cardiovascular Risk Assessment Model Description</h1>", unsafe_allow_html=True)
             st.markdown("""
-            >A fully automated and robust analysis technique for popliteal artery evaluation (FRAPPE) is develped 
+            >A fully automated and robust analysis technique for popliteal artery evaluation (FRAPPE) is developed 
             using innovative machine learning techniques, including object tracking and a 256-layers deep neural 
-            network to detect the vessel wall, its dimention, and any plaque.
+            network to detect the vessel wall, its dimension, and any plaque.
             """)
             st.markdown(""">The performance of FRAPPE in the Osteoarthritis Initiative (OAI) dataset is validated by 
             comparing its measurements with manual measurements and estimating scan-rescan repeatability. 
             A preliminary assessment of FRAPPE’s ability to discriminate between diseased and non-diseased arteries 
-            is perfomed by comparing FRAPPE-based measurements between subjects with high and low cardiovascular risk.
+            is performed by comparing FRAPPE-based measurements between subjects with high and low cardiovascular risk.
             """)
 
     
@@ -244,21 +211,6 @@ if task == 'Overall Insight':
         treatment exercises to recommend. These exercises are most effective when performed regularly, 3-4 times a day and
         in short intervals of few times every hour rather than once a day for a longer period.
         """)
-        with st.expander("Static quads"):
-            st.write("""
-            Sit on the floor with your legs straight out in front of you.
-            Push the back of your knee down into the floor using your thigh muscles. 
-            Keep your toes pulled up towards your head. Hold for 5 seconds then relax. 
-            Repeat 5 times on each side.
-        """)
-            st.image("./data/Static Quads.PNG")
-        with st.expander("Straight leg raises"):
-            st.write("""
-            Lie on your back with your legs straight out in front of you. 
-            Tighten the thigh muscle of your injured leg and lift about eight inches off the ground. 
-            Repeat three sets of ten reps.
-        """)
-            st.image("./data/straight leg raises.PNG")
         with st.expander("Bridge"):
             st.write("""
             Lie on your back. Bend both your knees and extend both your arms along your body, palms face down. 
@@ -268,25 +220,6 @@ if task == 'Overall Insight':
             Hold for 10 secs and repeat 1 set of ten reps on each side.
         """)
             st.image("./data/bridges.PNG")
-        with st.expander("Moving warrior"):
-            st.write("""
-            Sand with your legs at one leg’s distance apart. 
-            Pivot your right foot out to ninety degrees. 
-            Line your right heel up with your left arch. 
-            Keeping your chest and hips open, elevate your arms to shoulder height. 
-            Now, bend your right knee so that it stacks over your ankle and keep it tracking between your third and fourth toes. 
-            Hold for ten seconds and then straighten your leg. 
-            Do ten reps and complete two sets before switching sides.
-        """)
-            st.image("./data/moving warrior.PNG")
-        with st.expander("Moving high lung"):
-            st.write("""
-            Stand with your feet together. 
-            Place your hands on your hips and step your left foot back as you bend your right knee over your ankle. 
-            Straighten and bend your right slowly, making sure not to lock the knee when you extend the leg. 
-            Repeat ten times and do three sets before switching sides.
-        """)
-            st.image("./data/moving high lunge.PNG")
     
     if Brace:
         st.markdown("<h1 style='text-align: left;font-size: 20px;'>Brace Recommendation</h1>", unsafe_allow_html=True)
@@ -395,14 +328,5 @@ if task == 'Data Visualization':
         [here](https://stanfordmlgroup.github.io/competitions/mrnet/).
         """)
 
-
-link = '[github](https://github.com/GolaraJ/MRNet-app)'
+link = '[github](https://github.com/sara-hrad/MRNet-app)'
 st.sidebar.markdown(link, unsafe_allow_html=True)
-
-# print(cases['0000'].keys())
-# print(cases['0000']['axial'].shape)
-# print(cases['0000']['coronal'].shape)
-# print(cases['0000']['sagittal'].shape)
-
-# plot = KneePlot(cases)
-# plot.draw()
