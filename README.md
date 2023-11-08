@@ -12,7 +12,7 @@ provides a demo of MRNet app illustrating the slices of axial, coronal, and sagi
 
 ![MRNet Demo](./data/App_sample.png)
 
-For training the MRNet and to be able to produce the image above, please download the data from [1], and 
+For training the MRNet and to be able to produce the image above, please download the data from [2], and 
 save it in 'data' folder.
 Run the 'main' file to train the MRNet model.
 
